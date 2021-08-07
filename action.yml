@@ -30,6 +30,14 @@ outputs:
       The target environment based off the github ref. One of 'dev',
       'test', or 'prod'.
     value: ${{ steps.environment.outputs.environment_name }}
+  target-environment-upper:
+    description: |
+      Identical to target-environment except the value is upper-cased. Useful
+      for interacting with GitHub Secrets or any case-sensitive scenario where
+      values need to be all upper-case. For example, using
+      MY_SECRET_$target_environment_upper when accessing different github
+      secrets for dev, test, and prod.
+    value: ${{ steps.environment.outputs.environment_name_upper }}
 
 runs:
   using: "composite"
@@ -121,7 +129,9 @@ runs:
             fi
 
             # Set the outputs for this step
+            env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
             echo "::set-output name=ENVIRONMENT_NAME::$environment_name"
+            echo "::set-output name=ENVIRONMENT_NAME_UPPER::$env_name_upper"
             echo "Setting the CF CLI to target $target_environment"
             echo "Environment name: $environment_name"
             cf target -o ${{ inputs.cf-org }} -s "$target_environment"
