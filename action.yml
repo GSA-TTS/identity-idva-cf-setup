@@ -66,30 +66,17 @@ runs:
     - name: Install the CloudFoundry CLI
       shell: bash
       run: |
-        # create a 'bin' directory for the binary
-        mkdir -p cfcli/bin
-        cd cfcli/bin
-
         # Download and extract the CLI
-        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v7&source=github" | tar -zx
-
-        # Put the binary on the GITHUB_PATH
-        echo "$(pwd)" >> $GITHUB_PATH
-        echo "Successfully installed the CF CLI at $(pwd)"
+        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v7&source=github" | sudo tar -zx --directory=/usr/local/bin
+        echo "Successfully installed CF CLI version $(cf --version)"
 
     - name: Authenticate to the CF API
       shell: bash
       run: |
-        # Authenticate to the cloud.gov cli if user/pass was provided
-        # The 'PATH' currently doesn't have 'cf' on it, so use ./
-        if [ ${{ steps.input-validation.outputs.install-only-mode }} = false ]
-        then
-            cf api https://api.fr.cloud.gov
-            cf auth ${{ inputs.cf-username }} ${{ inputs.cf-password }}
-            echo "Successfully authenticated with the CF CLI."
-        else
-            echo "Install-only mode was set to: ${{ steps.input-validation.outputs.install-only-mode }}"
-        fi
+        # Authenticate to the cloud.gov cli
+        cf api https://api.fr.cloud.gov
+        cf auth ${{ inputs.cf-username }} ${{ inputs.cf-password }}
+        echo "Successfully authenticated with the CF CLI."
 
     - name: Target an environment
       id: environment
