@@ -2,27 +2,25 @@
 name: 'Configure CF CLI'
 
 description: |
-  Installs the latest linux64 binary for the CloudFoundry CLI as outlined in
+  First installs the latest linux64 binary for the CloudFoundry CLI as outlined in
   https://github.com/cloudfoundry/cli/blob/master/doc/installation-instructions/installation-instructions-v7.md#installers-and-compressed-binaries.
-  When no parameters are given, reverts to install-only mode that stops after
-  installing the CF CLI. Otherwise all parameters must be supplied and the
-  action will authenticate and target one of dev/test/prod spaces.
+  The action then authenticates the CF CLI with a "cf auth" command using the
+  cf-username and cf-password provided. Finally, targets one of the GIVE
+  dev/test/prod spaces with a "cf target" command using the cf-org provided. The
+  action assumes a CF API of "https://api.fr.cloud.gov"
 
 inputs:
   cf-username:
     description: 'CloudFoundry username to authenticate with'
     required: true
-    default: ''
 
   cf-password:
     description: 'CloudFoundry password to authenticate with'
     required: true
-    default: ''
 
   cf-org:
     description: 'CloudFoundry Organization to target'
     required: true
-    default: ''
 
 outputs:
   target-environment:
@@ -51,48 +49,28 @@ runs:
         cf_password=${{ inputs.cf-password }}
         cf_org=${{ inputs.cf-org }}
 
-        install_only_mode=false
-
-        if [ -z "$cf_username" ] || [ -z "$cf_password" ] || [ -z "$cf_org" ]
-        then
-            install_only_mode=true
-            echo "Reverting to install-only mode."
-        fi
-
         echo "::add-mask::$cf_username"
         echo "::add-mask::$cf_password"
         echo "::add-mask::$cf-org"
 
-        # Export whether the action is in "install-only" mode
-        echo "::set-output name=install-only-mode::$install_only_mode"
-
     - name: Install the CloudFoundry CLI
       shell: bash
       run: |
-        # create a 'bin' directory for the binary
-        mkdir -p cfcli/bin
-        cd cfcli/bin
-
         # Download and extract the CLI
-        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v7&source=github" | tar -zx
-
-        # Put the binary on the GITHUB_PATH
-        echo "$(pwd)" >> $GITHUB_PATH
-        echo "Successfully installed the CF CLI at $(pwd)"
+        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v7&source=github" | sudo tar -zx --directory=/usr/local/bin
+        echo "Successfully installed $(cf --version)"
 
     - name: Authenticate to the CF API
       shell: bash
       run: |
-        # Authenticate to the cloud.gov cli if user/pass was provided
-        # The 'PATH' currently doesn't have 'cf' on it, so use ./
-        if [ ${{ steps.input-validation.outputs.install-only-mode }} = false ]
-        then
-            cf api https://api.fr.cloud.gov
-            cf auth ${{ inputs.cf-username }} ${{ inputs.cf-password }}
-            echo "Successfully authenticated with the CF CLI."
-        else
-            echo "Install-only mode was set to: ${{ steps.input-validation.outputs.install-only-mode }}"
-        fi
+        # Authenticate to the cloud.gov cli
+        echo "::group::Authenticate to Cloud.gov CF api"
+
+        cf api https://api.fr.cloud.gov
+        cf auth ${{ inputs.cf-username }} ${{ inputs.cf-password }}
+
+        echo "::endgroup::"
+        echo "Successfully authenticated to Cloud.gov."
 
     - name: Target an environment
       id: environment
@@ -100,39 +78,39 @@ runs:
       run: |
         # Determine the deployment target based on the github ref and set the
         # 'cf target' to the correct value.
-        if [ ${{ steps.input-validation.outputs.install-only-mode }} = false ]
+        echo "::group::Target Environment"
+        echo "Github Ref is: ${{ github.ref }}"
+        echo "GitHub event name is: $GITHUB_EVENT_NAME"
+
+        if [[ $GITHUB_REF == "refs/heads/main" ]]
         then
-            echo "Github Ref is: ${{ github.ref }}"
-            echo "GitHub event name is: $GITHUB_EVENT_NAME"
-
-            if [[ $GITHUB_REF == "refs/heads/main" ]]
+            # Pushes to main are deployed to dev
+            target_environment=give-dev
+            environment_name=dev
+        elif [[ $GITHUB_REF =~ refs/tags/* ]]
+        then
+            if [[ "$GITHUB_EVENT_NAME" == "push" ]]
             then
-                # Pushes to main are deployed to dev
-                target_environment=give-dev
-                environment_name=dev
-            elif [[ $GITHUB_REF =~ refs/tags/* ]]
+                # Tags on main are deployed to test
+                target_environment=give-test
+                environment_name=test
+            elif [[ "$GITHUB_EVENT_NAME" == "release" ]]
             then
-                if [[ "$GITHUB_EVENT_NAME" == "push" ]]
-                then
-                    # Tags on main are deployed to test
-                    target_environment=give-test
-                    environment_name=test
-                elif [[ "$GITHUB_EVENT_NAME" == "release" ]]
-                then
-                    # Release events on tags are deployed to prod
-                    target_environment=give-prod
-                    environment_name=prod
-                fi
-            else
-                echo 'Unknown deployment target'
-                exit 1
+                # Release events on tags are deployed to prod
+                target_environment=give-prod
+                environment_name=prod
             fi
-
-            # Set the outputs for this step
-            env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
-            echo "::set-output name=ENVIRONMENT_NAME::$environment_name"
-            echo "::set-output name=ENVIRONMENT_NAME_UPPER::$env_name_upper"
-            echo "Setting the CF CLI to target $target_environment"
-            echo "Environment name: $environment_name"
-            cf target -o ${{ inputs.cf-org }} -s "$target_environment"
+        else
+            echo 'Unknown deployment target'
+            exit 1
         fi
+
+        # Set the outputs for this step
+        env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
+        echo "::set-output name=ENVIRONMENT_NAME::$environment_name"
+        echo "::set-output name=ENVIRONMENT_NAME_UPPER::$env_name_upper"
+        echo "Setting the CF CLI to target $target_environment"
+        echo "Environment name: $environment_name"
+        cf target -o ${{ inputs.cf-org }} -s "$target_environment"
+        echo "::endgroup::"
+        echo "Successfully targeted a space."
