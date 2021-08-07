@@ -2,27 +2,24 @@
 name: 'Configure CF CLI'
 
 description: |
-  Installs the latest linux64 binary for the CloudFoundry CLI as outlined in
+  First installs the latest linux64 binary for the CloudFoundry CLI as outlined in
   https://github.com/cloudfoundry/cli/blob/master/doc/installation-instructions/installation-instructions-v7.md#installers-and-compressed-binaries.
-  When no parameters are given, reverts to install-only mode that stops after
-  installing the CF CLI. Otherwise all parameters must be supplied and the
-  action will authenticate and target one of dev/test/prod spaces.
+  The action then authenticates the CF CLI with a "cf auth" command using the
+  cf-username and cf-password provided. Finally, targets one of the GIVE
+  dev/test/prod spaces with a "cf target" command using the cf-org provided.
 
 inputs:
   cf-username:
     description: 'CloudFoundry username to authenticate with'
     required: true
-    default: ''
 
   cf-password:
     description: 'CloudFoundry password to authenticate with'
     required: true
-    default: ''
 
   cf-org:
     description: 'CloudFoundry Organization to target'
     required: true
-    default: ''
 
 outputs:
   target-environment:
