@@ -6,7 +6,7 @@ authenticate to the cloud.gov CLI and target one of the give 'dev', 'test', or
 
 # Usage
 ```yaml
-- uses: 18F/identity-give-cf-action@v1
+- uses: 18F/identity-give-cf-setup@v2
   with:
     cf-username: ${{ secrets.CF_USER }}
     cf-password: ${{ secrets.CF_PASS }}
@@ -26,14 +26,17 @@ jobs:
     name: Cloud Foundry Job
     steps:
       - uses: actions/checkout@v2
-      - id: cf-setup
-        uses: 18F/identity-give-cf-action@v1
+
+      - uses: 18F/identity-give-cf-setup@v2
+        id: cf-setup
         with:
           cf-username: ${{ secrets.CF_USER }}
           cf-password: ${{ secrets.CF_PASS }}
           cf-org: ${{ secrets.CF_ORG }}
+
       - run: echo "Environment target was ${{ steps.cf-setup.outputs.target-environment }}
         shell: bash
+
       - run: echo "Upper-case target was ${{ steps.cf-setup.outputs.target-environment-upper }}
         shell: bash
 ```
