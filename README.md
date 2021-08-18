@@ -1,12 +1,18 @@
-# GIVE CloudFoundry CLI Configuration Setup
-This action installs the CloudFoundry CLI within a GitHub action run and will
-authenticate to the cloud.gov CLI and target one of the give 'dev', 'test', or
-'prod' environments. The action assumes the Cloud.gov CF api of 
-"https://api.fr.cloud.gov" and usage of GIVE-specific space names.
+# Cloud.gov CloudFoundry CLI Configuration Setup
+This action performs the following steps in order:
+
+1. Installs the CloudFoundry CLI
+2. Runs the `cf api` command to set the CLI to target the cloud.gov API
+(https://api.fr.cloud.gov).
+3. Authenticates to the cloud.gov CLI using the provided user/pass.
+4. Targets one of 'dev', 'test', or 'prod' spaces. Note: the action will
+determine the space to target based on the github environment. Pushes to
+`main` target 'dev', tags will target 'test', and GitHub releases will
+target 'prod'.
 
 # Usage
 ```yaml
-- uses: 18F/identity-give-cf-setup@v2
+- uses: 18F/identity-idva-cf-setup@v2
   with:
     cf-username: ${{ secrets.CF_USER }}
     cf-password: ${{ secrets.CF_PASS }}
@@ -27,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: 18F/identity-give-cf-setup@v2
+      - uses: 18F/identity-idva-cf-setup@v2
         id: cf-setup
         with:
           cf-username: ${{ secrets.CF_USER }}

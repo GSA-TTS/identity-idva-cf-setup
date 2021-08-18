@@ -2,12 +2,16 @@
 name: 'Configure CF CLI'
 
 description: |
-  First installs the latest linux64 binary for the CloudFoundry CLI as outlined in
+  Installs the latest linux64 binary for the CloudFoundry CLI as outlined in
   https://github.com/cloudfoundry/cli/blob/master/doc/installation-instructions/installation-instructions-v7.md#installers-and-compressed-binaries.
   The action then authenticates the CF CLI with a "cf auth" command using the
-  cf-username and cf-password provided. Finally, targets one of the GIVE
+  cf-username and cf-password provided. Finally, targets one of the
   dev/test/prod spaces with a "cf target" command using the cf-org provided. The
-  action assumes a CF API of "https://api.fr.cloud.gov"
+  action assumes a CF API of "https://api.fr.cloud.gov" and that spaces are named
+  "dev", "test", and "prod".
+
+  Targets are determined as follows - Pushes to the main branch target dev, tags
+  on the main branch target test, and releases will target prod.
 
 inputs:
   cf-username:
@@ -85,19 +89,16 @@ runs:
         if [[ $GITHUB_REF == "refs/heads/main" ]]
         then
             # Pushes to main are deployed to dev
-            target_environment=give-dev
             environment_name=dev
         elif [[ $GITHUB_REF =~ refs/tags/* ]]
         then
             if [[ "$GITHUB_EVENT_NAME" == "push" ]]
             then
                 # Tags on main are deployed to test
-                target_environment=give-test
                 environment_name=test
             elif [[ "$GITHUB_EVENT_NAME" == "release" ]]
             then
                 # Release events on tags are deployed to prod
-                target_environment=give-prod
                 environment_name=prod
             fi
         else
@@ -109,8 +110,8 @@ runs:
         env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
         echo "::set-output name=ENVIRONMENT_NAME::$environment_name"
         echo "::set-output name=ENVIRONMENT_NAME_UPPER::$env_name_upper"
-        echo "Setting the CF CLI to target $target_environment"
-        echo "Environment name: $environment_name"
-        cf target -o ${{ inputs.cf-org }} -s "$target_environment"
+
+        echo "Setting the CF CLI to target $environment_name"
+        cf target -o ${{ inputs.cf-org }} -s "$environment_name"
         echo "::endgroup::"
-        echo "Successfully targeted a space."
+        echo "Successfully targeted $environment_name"
