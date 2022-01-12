@@ -121,7 +121,7 @@ runs:
             exit 1
         fi
 
-        space_target=$environment_name
+        target_space=$environment_name
 
         space_suffix=${{ inputs.space-suffix }}
         if [[ $space_suffix != "" ]]
@@ -136,10 +136,10 @@ runs:
         echo "ENVIRONMENT_NAME set to: $environment_name"
         echo "ENVIRONMENT_NAME_UPPER set to: $environment_name_upper"
 
-        echo "::set-output name=SPACE_TARGET::$space_target"
-        echo "SPACE_TARGET set to: $space_target"
+        echo "::set-output name=TARGET_SPACE::$target_space"
+        echo "TARGET_SPACE set to: $target_space"
 
-        echo "Setting the CF CLI to target $space_target"
-        cf target -o ${{ inputs.cf-org }} -s "$space_target"
+        echo "Setting the CF CLI to target $target_space"
+        cf target -o ${{ inputs.cf-org }} -s "$target_space"
         echo "::endgroup::"
-        echo "Successfully targeted $space_target"
+        echo "Successfully targeted $target_space"
