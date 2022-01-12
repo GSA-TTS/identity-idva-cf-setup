@@ -126,7 +126,7 @@ runs:
         space_suffix=${{ inputs.space-suffix }}
         if [[ $space_suffix != "" ]]
         then
-            space_target=$space_target-$space_suffix
+            target_space="$target_space$space_suffix"
         fi
 
         # Set the outputs for this step
