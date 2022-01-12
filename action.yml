@@ -121,6 +121,7 @@ runs:
             exit 1
         fi
 
+        space_suffix=${{ inputs.space-suffix }}
         target_space="$environment_name$space_suffix"
 
         # Set the outputs for this step
