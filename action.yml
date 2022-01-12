@@ -121,13 +121,7 @@ runs:
             exit 1
         fi
 
-        target_space=$environment_name
-
-        space_suffix=${{ inputs.space-suffix }}
-        if [[ $space_suffix != "" ]]
-        then
-            target_space="$target_space$space_suffix"
-        fi
+        target_space="$environment_name$space_suffix"
 
         # Set the outputs for this step
         env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
