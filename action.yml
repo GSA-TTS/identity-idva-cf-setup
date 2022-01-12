@@ -7,11 +7,14 @@ description: |
   The action then authenticates the CF CLI with a "cf auth" command using the
   cf-username and cf-password provided. Finally, targets one of the
   dev/test/prod spaces with a "cf target" command using the cf-org provided. The
-  action assumes a CF API of "https://api.fr.cloud.gov" and that spaces are named
-  "dev", "test", and "prod".
+  action assumes a CF API of "https://api.fr.cloud.gov" and that spaces are
+  named "dev", "test", and "prod".
 
   Targets are determined as follows - Pushes to the main branch target dev, tags
   on the main branch target test, and releases will target prod.
+
+  For users with multiple spaces per environment (e.g. dev-private, dev-public),
+  a "space-suffix" can optionally be provided to append to dev|test|prod.
 
 inputs:
   cf-username:
@@ -25,6 +28,14 @@ inputs:
   cf-org:
     description: 'CloudFoundry Organization to target'
     required: true
+
+  space-suffix:
+    description: >
+      The suffix to append to the targeted space. If the targeted space is "dev"
+      and the space-suffix is "-public" the resulting "dev-public" space will be
+      targeted with the "cf target" command.
+    required: false
+    default: ""
 
 outputs:
   target-environment:
@@ -40,6 +51,10 @@ outputs:
       MY_SECRET_$target_environment_upper when accessing different github
       secrets for dev, test, and prod.
     value: ${{ steps.environment.outputs.environment_name_upper }}
+  target-space:
+    description: |
+      The name of the space that was targeted by "cf target". When no suffix
+      is provided, target-environment and target-space will be equal.
 
 runs:
   using: "composite"
@@ -106,12 +121,25 @@ runs:
             exit 1
         fi
 
+        space_target=$environment_name
+
+        space_suffix=${{ inputs.space-suffix }}
+        if [[ $space_suffix != "" ]]
+        then
+            space_target=$space_target-$space_suffix
+        fi
+
         # Set the outputs for this step
         env_name_upper=$(echo "$environment_name" | tr '[:lower:]' '[:upper:]')
         echo "::set-output name=ENVIRONMENT_NAME::$environment_name"
         echo "::set-output name=ENVIRONMENT_NAME_UPPER::$env_name_upper"
+        echo "ENVIRONMENT_NAME set to: $environment_name"
+        echo "ENVIRONMENT_NAME_UPPER set to: $environment_name_upper"
 
-        echo "Setting the CF CLI to target $environment_name"
-        cf target -o ${{ inputs.cf-org }} -s "$environment_name"
+        echo "::set-output name=SPACE_TARGET::$space_target"
+        echo "SPACE_TARGET set to: $space_target"
+
+        echo "Setting the CF CLI to target $space_target"
+        cf target -o ${{ inputs.cf-org }} -s "$space_target"
         echo "::endgroup::"
-        echo "Successfully targeted $environment_name"
+        echo "Successfully targeted $space_target"
