@@ -17,12 +17,18 @@ target 'prod'.
     cf-username: ${{ secrets.CF_USER }}
     cf-password: ${{ secrets.CF_PASS }}
     cf-org: ${{ secrets.CF_ORG }}
+
+    # Optional
+    space-suffix: "-closed"
 ```
 
 ## Outputs
-The action outputs the common name of the environment targeted as both lower
-and upper-case variants. The `target-environment` output will be one of `dev`,
-`test`, or `prod`. `target-environment-upper` is the upper-case variant.
+
+| Output | Description |
+| --- | --- |
+| `target-environment` | One of `dev`, `test`, or `prod` depending on the GitHub environment at the time of execution |
+| `target-environment-upper` | The upper-case variant of `target-environment` |
+| `target-space` | The name of the cf space that was targeted by the action. This will be the concatenation of the `target-environment` output and `space-suffix` parameter |
 
 ### Using the action output
 ```yaml
