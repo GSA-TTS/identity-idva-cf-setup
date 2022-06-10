@@ -76,7 +76,7 @@ runs:
       shell: bash
       run: |
         # Download and extract the CLI
-        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v7&source=github" | sudo tar -zx --directory=/usr/local/bin
+        curl --silent --show-error -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=v8" | sudo tar -zx --directory=/usr/local/bin
         echo "Successfully installed $(cf --version)"
 
     - name: Authenticate to the CF API
