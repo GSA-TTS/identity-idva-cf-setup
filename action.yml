@@ -55,6 +55,7 @@ outputs:
     description: |
       The name of the space that was targeted by "cf target". When no suffix
       is provided, target-environment and target-space will be equal.
+    value: ${{ steps.environment.outputs.target-space }}
 
 runs:
   using: "composite"
