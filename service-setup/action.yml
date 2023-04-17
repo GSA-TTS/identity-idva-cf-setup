@@ -27,11 +27,6 @@ inputs:
     required: false
     default: false
 
-  standard-deployment:
-    description: 'Perform a standard "cf push --vars-file vars.yaml --strategy rolling"'
-    required: false
-    default: false
-
   target-environment:
     description: 'String indicating the targeted space (dev/test/prod).'
     required: true
