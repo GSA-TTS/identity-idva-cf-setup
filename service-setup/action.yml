@@ -1,0 +1,64 @@
+---
+name: 'CF Service Setup'
+
+inputs:
+  require-redis:
+    description: 'Boolean indicating whether to ensure sk-redis is available before deployment.'
+    required: false
+    default: false
+
+  require-postgres:
+    description: 'Boolean indicating whether to ensure sk-postgres is available before deployment.'
+    required: false
+    default: false
+
+  require-elasticsearch:
+    description: 'Boolean indicating whether to ensure sk-elasticsearch is available before deployment.'
+    required: false
+    default: false
+
+  require-s3:
+    description: 'Boolean indicating whether to ensure sk-s3 is available before deployment.'
+    required: false
+    default: false
+
+  create-required-services:
+    description: 'Boolean indicating whether required services should be created if they do not yet exist.'
+    required: false
+    default: false
+
+  target-environment:
+    description: 'String indicating the targeted space (dev/test/prod).'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure Services Available
+      shell: bash
+      run: |
+        # Determine whether to create the service or just check for availability
+        svc_check_opts='-c'
+        if [[ ${{ inputs.create-required-services }} == "true" ]]; then
+          svc_check_opts='' # Do not pass '-c' (check-only) flag
+        fi
+
+        echo "::group::Ensure Services Available"
+
+        if [[ ${{ inputs.require-redis }} == "true" ]]; then
+          ${{ github.action_path }}/ensure_service_available.sh $svc_check_opts $(jq -j '.redis | .service, " ", .plan.${{ inputs.target-environment }}, " ", .name' services.json)
+        fi
+
+        if [[ ${{ inputs.require-postgres }} == "true" ]]; then
+          ${{ github.action_path }}/ensure_service_available.sh $svc_check_opts $(jq -j '.db | .service, " ", .plan.${{ inputs.target-environment }}, " ", .name' services.json)
+        fi
+
+        if [[ ${{ inputs.require-elasticsearch }} == "true" ]]; then
+          ${{ github.action_path }}/ensure_service_available.sh $svc_check_opts $(jq -j '.es | .service, " ", .plan.${{ inputs.target-environment }}, " ", .name' services.json)
+        fi
+
+        if [[ ${{ inputs.require-s3 }} == "true" ]]; then
+          ${{ github.action_path }}/ensure_service_available.sh $svc_check_opts $(jq -j '.s3 | .service, " ", .plan.${{ inputs.target-environment }}, " ", .name' services.json)
+        fi
+
+        echo "::endgroup::"
