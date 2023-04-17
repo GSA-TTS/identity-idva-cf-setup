@@ -1,8 +1,5 @@
 ---
-name: 'SK Setup'
-
-description: |
-  Performs the deployment steps common to all SK microservices within IDVA.
+name: 'CF Service Setup'
 
 inputs:
   require-redis:
@@ -29,18 +26,6 @@ inputs:
     description: 'Boolean indicating whether required services should be created if they do not yet exist.'
     required: false
     default: false
-
-  s3-url:
-    description: 'The S3 URL for the SK app files'
-    required: true
-
-  app-directory:
-    description: 'The directory containing the files relevant to the microservice being deployed.'
-    required: true
-
-  sk-secrets:
-    description: 'The SK secrets used during the vars file generation.'
-    required: true
 
   standard-deployment:
     description: 'Perform a standard "cf push --vars-file vars.yaml --strategy rolling"'
