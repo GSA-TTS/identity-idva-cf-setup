@@ -112,7 +112,7 @@ runs:
             environment_name=pre
         elif [[ $GITHUB_REF =~ refs/tags/* ]]
         then
-            if [[ "$GITHUB_EVENT_NAME" == "push" ]]
+            if [[ "$GITHUB_EVENT_NAME" == "push" ]] || [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]
             then
                 # Tags on main are deployed to test
                 environment_name=test
