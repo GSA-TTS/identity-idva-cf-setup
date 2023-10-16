@@ -120,9 +120,12 @@ runs:
             then
                 # Release events on tags are deployed to prod
                 environment_name=prod
+            else
+                echo "Unknown deployment target: Unknown event: $GITHUB_EVENT_NAME"
+                exit 1
             fi
         else
-            echo 'Unknown deployment target'
+            echo "Unknown deployment target: Unknown ref: $GITHUB_REF"
             exit 1
         fi
 
